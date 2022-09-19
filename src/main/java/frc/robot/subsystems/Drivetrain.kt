@@ -4,6 +4,7 @@ import com.ctre.phoenix.motorcontrol.ControlMode
 import com.ctre.phoenix.motorcontrol.FeedbackDevice
 import com.ctre.phoenix.motorcontrol.NeutralMode
 import com.ctre.phoenix.motorcontrol.can.TalonFX
+import com.ctre.phoenix.sensors.CANCoder
 import com.kauailabs.navx.frc.AHRS
 import com.revrobotics.CANSparkMax
 import com.revrobotics.CANSparkMaxLowLevel
@@ -21,99 +22,99 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase
 import frc.robot.*
 import kotlin.math.atan2
 
-class SafetyWrapper(val function: () -> Unit) : MotorSafety() {
+// Rename lock to something more clear
+class SwerveModuleWrapper(private val powerMotor: TalonFX,
+                          private val powerFeedforward: SimpleMotorFeedforward,
+                          private val powerPID: PIDController,
+                          private val angleMotor: CANSparkMax,
+                          private val angleEncoder: CANCoder,
+                          private val anglePID: PIDController,
+                          private val centerRotation: Rotation2d,
+                          var state: SwerveModuleState) : MotorSafety() {
+    private fun getVelocity(): Double {
+        return powerMotor.selectedSensorVelocity * POWER_ENCODER_MULTIPLIER
+    }
+
+    private fun getAngle(): Rotation2d {
+        return Rotation2d(angleEncoder.absolutePosition * ANGLE_ENCODER_MULTIPLIER)
+    }
+
+    // Should be called in periodic
+    fun updateState() {
+        state = SwerveModuleState(getVelocity(), getAngle())
+    }
+
+    fun set(wanted: SwerveModuleState) {
+        // Using state because it should be updated and getVelocity and getAngle (probably) spend time over CAN
+        val optimized = SwerveModuleState.optimize(wanted, state.angle)
+
+        powerMotor.set(ControlMode.PercentOutput, powerFeedforward.calculate(optimized.speedMetersPerSecond) + powerPID.calculate(wanted.speedMetersPerSecond, optimized.speedMetersPerSecond))
+        // PID may need to be continuous, but optimize may eliminate that
+        angleMotor.set(anglePID.calculate(wanted.angle.radians, optimized.angle.radians))
+    }
+
+    fun lock() {
+        set(SwerveModuleState(0.0, centerRotation))
+    }
+
     override fun stopMotor() {
-        function()
+        powerMotor.set(ControlMode.PercentOutput, 0.0)
+        angleMotor.stopMotor()
     }
 
     override fun getDescription(): String {
-        return "Dummy"
+        return "Swerve Module"
     }
 
 }
 
 object Drivetrain : SubsystemBase() {
     private val kinematics: SwerveDriveKinematics
-
-    // Instead of lists have list of module classes
-    private val powerMotors: Array<TalonFX>
-    private val powerPIDControllers: Array<PIDController>
-    private val powerFeedforwards: Array<SimpleMotorFeedforward>
-
-    private val angleMotors: Array<CANSparkMax>
-    private val anglePIDControllers: Array<PIDController>
-
-    private val centerRotations: Array<Rotation2d>
-
-    private val safetyWrappers: Array<SafetyWrapper>
-
     private val gyro = AHRS()
-    private val moduleStates: Array<SwerveModuleState>
     private val odometry: SwerveDriveOdometry
+
+    private val modules: Array<SwerveModuleWrapper>
 
     init {
         val modulePositions = mutableListOf<Translation2d>()
 
-        val powerMotorsList = mutableListOf<TalonFX>()
-        val powerFeedforwardsList = mutableListOf<SimpleMotorFeedforward>()
-        val powerPIDControllersList = mutableListOf<PIDController>()
+        val modulesList = mutableListOf<SwerveModuleWrapper>()
 
-        val angleMotorsList = mutableListOf<CANSparkMax>()
-        val anglePIDControllersList = mutableListOf<PIDController>()
+        for (moduleData in swerveModuleData) {
+            modulePositions.add(moduleData.position)
 
-        val centerRotationsList = mutableListOf<Rotation2d>()
-
-        val safetyWrappersList = mutableListOf<SafetyWrapper>()
-
-        val moduleStatesList = mutableListOf<SwerveModuleState>()
-
-        for (module in swerveModules) {
-            modulePositions.add(module.position)
-
-            val powerMotor = TalonFX(module.powerMotorID)
+            val powerMotor = TalonFX(moduleData.powerMotorID)
             powerMotor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative)
             powerMotor.setNeutralMode(NeutralMode.Brake)
-            safetyWrappersList.add(SafetyWrapper{ powerMotor.set(ControlMode.PercentOutput, 0.0) })
-            powerMotorsList.add(powerMotor)
 
-            powerPIDControllersList.add(PIDController(swervePowerPID.p, swervePowerPID.i, swervePowerPID.d))
-            powerFeedforwardsList.add(SimpleMotorFeedforward(swervePowerFeedforward.ks, swervePowerFeedforward.kv, swervePowerFeedforward.ka))
-
-            val angleMotor = CANSparkMax(module.angleMotorID, CANSparkMaxLowLevel.MotorType.kBrushless)
+            val angleMotor = CANSparkMax(moduleData.angleMotorID, CANSparkMaxLowLevel.MotorType.kBrushless)
             angleMotor.idleMode = CANSparkMax.IdleMode.kBrake
-            safetyWrappersList.add(SafetyWrapper(angleMotor::stopMotor))
-            angleMotorsList.add(angleMotor)
 
-            anglePIDControllersList.add(PIDController(swerveAnglePID.p, swerveAnglePID.i, swerveAnglePID.d))
-
-            centerRotationsList.add(Rotation2d(atan2(module.position.y, module.position.x)))
-
-            moduleStatesList.add(SwerveModuleState())
+            modulesList.add(SwerveModuleWrapper(powerMotor,
+                SimpleMotorFeedforward(swervePowerFeedforward.ks, swervePowerFeedforward.kv, swervePowerFeedforward.ka),
+                PIDController(swervePowerPID.p, swervePowerPID.i, swervePowerPID.d),
+                CANSparkMax(moduleData.angleMotorID, CANSparkMaxLowLevel.MotorType.kBrushless),
+                CANCoder(moduleData.angleEncoderID),
+                PIDController(swerveAnglePID.p, swerveAnglePID.i, swerveAnglePID.d),
+                Rotation2d(atan2(moduleData.position.y, moduleData.position.x)),
+                SwerveModuleState()))
         }
 
         kinematics = SwerveDriveKinematics(*modulePositions.toTypedArray())
-
-        powerMotors = powerMotorsList.toTypedArray()
-        powerPIDControllers = powerPIDControllersList.toTypedArray()
-        powerFeedforwards = powerFeedforwardsList.toTypedArray()
-
-        angleMotors = angleMotorsList.toTypedArray()
-        anglePIDControllers = anglePIDControllersList.toTypedArray()
-
-        centerRotations = centerRotationsList.toTypedArray()
-
-        safetyWrappers = safetyWrappersList.toTypedArray()
-
-        moduleStates = moduleStatesList.toTypedArray()
         odometry = SwerveDriveOdometry(kinematics, gyro.rotation2d)
+
+        modules = modulesList.toTypedArray()
     }
 
     override fun periodic() {
-        for (i in moduleStates.indices) {
-            moduleStates[i] = SwerveModuleState(powerMotors[i].selectedSensorVelocity * POWER_ENCODER_MULTIPLIER, Rotation2d(angleMotors[i].encoder.position * ANGLE_ENCODER_MULTIPLIER))
+        val states = mutableListOf<SwerveModuleState>()
+
+        for (module in modules) {
+            module.updateState()
+            states.add(module.state)
         }
 
-        odometry.update(gyro.rotation2d, *moduleStates)
+        odometry.update(gyro.rotation2d, *states.toTypedArray())
     }
 
     fun getPose(): Pose2d {
@@ -121,46 +122,32 @@ object Drivetrain : SubsystemBase() {
     }
 
     private fun feed() {
-        for (wrapper in safetyWrappers) {
-            wrapper.feed()
+        for (module in modules) {
+            module.feed()
         }
     }
 
     fun drive(chassisSpeeds: ChassisSpeeds) {
-        val wantedModuleStates = kinematics.toSwerveModuleStates(chassisSpeeds)
+        val wantedStates = kinematics.toSwerveModuleStates(chassisSpeeds)
 
-        for (i in wantedModuleStates.indices) {
-            val optimized = SwerveModuleState.optimize(wantedModuleStates[i], moduleStates[i].angle)
-
-            powerMotors[i].set(ControlMode.PercentOutput, powerFeedforwards[i].calculate(optimized.speedMetersPerSecond) + powerPIDControllers[i].calculate(moduleStates[i].speedMetersPerSecond, optimized.speedMetersPerSecond))
-            angleMotors[i].set(anglePIDControllers[i].calculate(moduleStates[i].angle.radians, optimized.angle.radians))
+        for (i in wantedStates.indices) {
+            modules[i].set(wantedStates[i])
         }
 
         feed()
     }
 
     fun lock() {
-        for (powerMotor in powerMotors) {
-            powerMotor.set(ControlMode.PercentOutput, 0.0)
-        }
-
-        for (i in angleMotors.indices) {
-            val angle = Rotation2d(angleMotors[i].encoder.position * ANGLE_ENCODER_MULTIPLIER)
-            val optimized = SwerveModuleState.optimize(SwerveModuleState(0.0, centerRotations[i]), angle)
-
-            angleMotors[i].set(anglePIDControllers[i].calculate(angle.radians, optimized.angle.radians))
+        for (module in modules) {
+            module.lock()
         }
 
         feed()
     }
 
     fun stop() {
-        for (powerMotor in powerMotors) {
-            powerMotor.set(ControlMode.PercentOutput, 0.0)
-        }
-
-        for (angleMotor in angleMotors) {
-            angleMotor.stopMotor()
+        for (module in modules) {
+            module.stopMotor()
         }
 
         feed()

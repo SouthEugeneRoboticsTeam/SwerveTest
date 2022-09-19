@@ -4,9 +4,9 @@ import edu.wpi.first.math.controller.PIDController
 import edu.wpi.first.math.controller.SimpleMotorFeedforward
 import edu.wpi.first.math.geometry.Translation2d
 
-data class SwerveModule(val position: Translation2d, val powerMotorID: Int, val angleMotorID: Int)
+data class SwerveModuleData(val position: Translation2d, val powerMotorID: Int, val angleMotorID: Int, val angleEncoderID: Int)
 
-val swerveModules = mutableListOf(SwerveModule(Translation2d(0.0, 0.0), 0, 0))
+val swerveModuleData = mutableListOf(SwerveModuleData(Translation2d(0.0, 0.0), 0, 0, 0))
 
 val swervePowerFeedforward = SimpleMotorFeedforward(0.0, 0.0, 0.0)
 val swervePowerPID = PIDController(0.0, 0.0, 0.0)
