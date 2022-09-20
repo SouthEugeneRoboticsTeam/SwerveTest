@@ -65,7 +65,6 @@ class SwerveModule(private val powerMotor: TalonFX,
     override fun getDescription(): String {
         return "Swerve Module"
     }
-
 }
 
 object Drivetrain : SubsystemBase() {
