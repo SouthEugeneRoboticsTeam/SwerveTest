@@ -23,14 +23,14 @@ import frc.robot.*
 import kotlin.math.atan2
 
 // Rename lock to something more clear
-class SwerveModuleWrapper(private val powerMotor: TalonFX,
-                          private val powerFeedforward: SimpleMotorFeedforward,
-                          private val powerPID: PIDController,
-                          private val angleMotor: CANSparkMax,
-                          private val angleEncoder: CANCoder,
-                          private val anglePID: PIDController,
-                          private val centerRotation: Rotation2d,
-                          var state: SwerveModuleState) : MotorSafety() {
+class SwerveModule(private val powerMotor: TalonFX,
+                   private val powerFeedforward: SimpleMotorFeedforward,
+                   private val powerPID: PIDController,
+                   private val angleMotor: CANSparkMax,
+                   private val angleEncoder: CANCoder,
+                   private val anglePID: PIDController,
+                   private val centerRotation: Rotation2d,
+                   var state: SwerveModuleState) : MotorSafety() {
     private fun getVelocity(): Double {
         return powerMotor.selectedSensorVelocity * POWER_ENCODER_MULTIPLIER
     }
@@ -73,12 +73,12 @@ object Drivetrain : SubsystemBase() {
     private val gyro = AHRS()
     private val odometry: SwerveDriveOdometry
 
-    private val modules: Array<SwerveModuleWrapper>
+    private val modules: Array<SwerveModule>
 
     init {
         val modulePositions = mutableListOf<Translation2d>()
 
-        val modulesList = mutableListOf<SwerveModuleWrapper>()
+        val modulesList = mutableListOf<SwerveModule>()
 
         for (moduleData in swerveModuleData) {
             modulePositions.add(moduleData.position)
@@ -90,7 +90,7 @@ object Drivetrain : SubsystemBase() {
             val angleMotor = CANSparkMax(moduleData.angleMotorID, CANSparkMaxLowLevel.MotorType.kBrushless)
             angleMotor.idleMode = CANSparkMax.IdleMode.kBrake
 
-            modulesList.add(SwerveModuleWrapper(powerMotor,
+            modulesList.add(SwerveModule(powerMotor,
                 SimpleMotorFeedforward(swervePowerFeedforward.ks, swervePowerFeedforward.kv, swervePowerFeedforward.ka),
                 PIDController(swervePowerPID.p, swervePowerPID.i, swervePowerPID.d),
                 CANSparkMax(moduleData.angleMotorID, CANSparkMaxLowLevel.MotorType.kBrushless),
