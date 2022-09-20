@@ -11,6 +11,8 @@ import frc.robot.commands.teleop.JoystickDrive
 import frc.robot.commands.test.RunTests
 
 object Robot : TimedRobot() {
+    private val commandScheduler = CommandScheduler.getInstance()
+
     private val joystickDrive = JoystickDrive(false)
     private val auto = DrivePath(TrajectoryGenerator.generateTrajectory(
         Pose2d(0.0, 0.0, Rotation2d(0.0)),
@@ -20,7 +22,8 @@ object Robot : TimedRobot() {
     private val runTests = RunTests()
 
     override fun robotPeriodic() {
-        CommandScheduler.getInstance().run()
+        Input.update()
+        commandScheduler.run()
     }
 
     override fun teleopInit() {

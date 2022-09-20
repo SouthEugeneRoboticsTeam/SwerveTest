@@ -20,6 +20,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState
 import edu.wpi.first.wpilibj.MotorSafety
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import frc.robot.*
+import kotlin.math.PI
 import kotlin.math.atan2
 
 // Rename lock to something more clear
@@ -31,6 +32,10 @@ class SwerveModule(private val powerMotor: TalonFX,
                    private val anglePID: PIDController,
                    private val centerRotation: Rotation2d,
                    var state: SwerveModuleState) : MotorSafety() {
+    init {
+        anglePID.enableContinuousInput(-PI, PI)
+    }
+
     private fun getVelocity(): Double {
         return powerMotor.selectedSensorVelocity * POWER_ENCODER_MULTIPLIER
     }
@@ -49,7 +54,6 @@ class SwerveModule(private val powerMotor: TalonFX,
         val optimized = SwerveModuleState.optimize(wanted, state.angle)
 
         powerMotor.set(ControlMode.PercentOutput, powerFeedforward.calculate(optimized.speedMetersPerSecond) + powerPID.calculate(wanted.speedMetersPerSecond, optimized.speedMetersPerSecond))
-        // PID may need to be continuous, but optimize may eliminate that
         angleMotor.set(anglePID.calculate(wanted.angle.radians, optimized.angle.radians))
     }
 
