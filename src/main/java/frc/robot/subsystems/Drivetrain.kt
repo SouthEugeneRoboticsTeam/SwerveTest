@@ -29,6 +29,7 @@ class SwerveModule(private val powerMotor: TalonFX,
                    private val powerPID: PIDController,
                    private val angleMotor: CANSparkMax,
                    private val angleEncoder: CANCoder,
+                   private val angleOffset: Double,
                    private val anglePID: PIDController,
                    private val centerRotation: Rotation2d,
                    var state: SwerveModuleState) : MotorSafety() {
@@ -41,7 +42,7 @@ class SwerveModule(private val powerMotor: TalonFX,
     }
 
     private fun getAngle(): Rotation2d {
-        return Rotation2d(angleEncoder.absolutePosition * ANGLE_ENCODER_MULTIPLIER)
+        return Rotation2d(angleEncoder.absolutePosition * ANGLE_ENCODER_MULTIPLIER - angleOffset)
     }
 
     // Should be called in periodic
@@ -98,6 +99,7 @@ object Drivetrain : SubsystemBase() {
                 PIDController(swervePowerPID.p, swervePowerPID.i, swervePowerPID.d),
                 CANSparkMax(moduleData.angleMotorID, CANSparkMaxLowLevel.MotorType.kBrushless),
                 CANCoder(moduleData.angleEncoderID),
+                moduleData.angleOffset,
                 PIDController(swerveAnglePID.p, swerveAnglePID.i, swerveAnglePID.d),
                 Rotation2d(atan2(moduleData.position.y, moduleData.position.x)),
                 SwerveModuleState()))
