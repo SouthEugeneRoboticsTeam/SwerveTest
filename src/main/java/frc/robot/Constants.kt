@@ -24,10 +24,10 @@ val autoAnglePID = PIDController(0.0, 0.0, 0.0)
 const val AUTO_ANGLE_MAX_VEL = 0.0
 const val AUTO_ANGLE_MAX_ACC = 0.0
 
-//PI * diameter / (gear ratio * counts per rev)
+// PI * diameter / (gear ratio * counts per rev)
 const val POWER_ENCODER_MULTIPLIER = PI * 0.1016 / (8.14 * 2048)
-//PI * diameter / counts per rev
-const val ANGLE_ENCODER_MULTIPLIER = 2 * PI / 4096
+// Degrees to radians
+const val ANGLE_ENCODER_MULTIPLIER = 0.01745329251
 
 const val DEADBAND = 0.1
 const val ROT_DEADBAND = 0.1
