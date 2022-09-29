@@ -54,8 +54,8 @@ class SwerveModule(private val powerMotor: TalonFX,
         // Using state because it should be updated and getVelocity and getAngle (probably) spend time over CAN
         val optimized = SwerveModuleState.optimize(wanted, state.angle)
 
-        powerMotor.set(ControlMode.PercentOutput, powerFeedforward.calculate(optimized.speedMetersPerSecond) + powerPID.calculate(wanted.speedMetersPerSecond, optimized.speedMetersPerSecond))
-        angleMotor.set(anglePID.calculate(wanted.angle.radians, optimized.angle.radians))
+        powerMotor.set(ControlMode.PercentOutput, powerFeedforward.calculate(optimized.speedMetersPerSecond) + powerPID.calculate(state.speedMetersPerSecond, optimized.speedMetersPerSecond))
+        angleMotor.set(anglePID.calculate(state.angle.radians, optimized.angle.radians))
     }
 
     fun lock() {
@@ -97,7 +97,7 @@ object Drivetrain : SubsystemBase() {
             modulesList.add(SwerveModule(powerMotor,
                 SimpleMotorFeedforward(swervePowerFeedforward.ks, swervePowerFeedforward.kv, swervePowerFeedforward.ka),
                 PIDController(swervePowerPID.p, swervePowerPID.i, swervePowerPID.d),
-                CANSparkMax(moduleData.angleMotorID, CANSparkMaxLowLevel.MotorType.kBrushless),
+                angleMotor,
                 CANCoder(moduleData.angleEncoderID),
                 moduleData.angleOffset,
                 PIDController(swerveAnglePID.p, swerveAnglePID.i, swerveAnglePID.d),
@@ -124,6 +124,10 @@ object Drivetrain : SubsystemBase() {
 
     fun getPose(): Pose2d {
         return odometry.poseMeters
+    }
+
+    fun setPose(pose: Pose2d) {
+        return odometry.resetPosition(pose, gyro.rotation2d)
     }
 
     private fun feed() {

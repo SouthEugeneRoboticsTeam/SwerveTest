@@ -13,7 +13,7 @@ import frc.robot.commands.test.RunTests
 object Robot : TimedRobot() {
     private val commandScheduler = CommandScheduler.getInstance()
 
-    private val joystickDrive = JoystickDrive(false)
+    private val joystickDrive = JoystickDrive(true)
     private val auto = DrivePath(TrajectoryGenerator.generateTrajectory(
         Pose2d(0.0, 0.0, Rotation2d(0.0)),
         listOf(),

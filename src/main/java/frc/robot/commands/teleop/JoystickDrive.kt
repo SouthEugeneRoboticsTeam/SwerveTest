@@ -4,6 +4,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.wpilibj2.command.CommandBase
 import frc.robot.*
 import frc.robot.subsystems.Drivetrain
+import kotlin.math.abs
 import kotlin.math.pow
 
 class JoystickDrive(private val fieldOrientated: Boolean) : CommandBase() {
@@ -16,8 +17,8 @@ class JoystickDrive(private val fieldOrientated: Boolean) : CommandBase() {
         val y = Input.getY()
         val rot = Input.getRot()
 
-        if (rot <= ROT_DEADBAND && x.pow(2) + y.pow(2) <= DEADBAND * DEADBAND) {
-            Drivetrain.drive(ChassisSpeeds(0.0, 0.0, Drivetrain.getPose().rotation.radians))
+        if (abs(rot) <= ROT_DEADBAND && x.pow(2) + y.pow(2) <= DEADBAND * DEADBAND) {
+            Drivetrain.stop()
         } else {
             if (fieldOrientated) {
                 Drivetrain.drive(ChassisSpeeds.fromFieldRelativeSpeeds(x * DRIVE_SPEED, y * DRIVE_SPEED, rot * ROT_SPEED, Drivetrain.getPose().rotation))

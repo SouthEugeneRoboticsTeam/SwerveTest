@@ -8,16 +8,17 @@ import kotlin.math.PI
 data class SwerveModuleData(val position: Translation2d, val powerMotorID: Int, val angleMotorID: Int, val angleEncoderID: Int, val angleOffset: Double)
 
 // (diagonal length / 4) * sqrt of 2
-const val HALF_SIDE_LENGTH = (86.6 / 4) * 1.41421356237
+const val HALF_SIDE_LENGTH = (0.866 / 4) * 1.41421356237
 val swerveModuleData = mutableListOf(
-    SwerveModuleData(Translation2d(HALF_SIDE_LENGTH, HALF_SIDE_LENGTH), 5, 1, 9, 0.0),
-    SwerveModuleData(Translation2d(-HALF_SIDE_LENGTH, -HALF_SIDE_LENGTH), 6, 2, 10, 0.0),
-    SwerveModuleData(Translation2d(-HALF_SIDE_LENGTH, HALF_SIDE_LENGTH), 7, 3, 11, 0.0),
-    SwerveModuleData(Translation2d(HALF_SIDE_LENGTH, -HALF_SIDE_LENGTH), 8, 4, 12, 0.0))
+    SwerveModuleData(Translation2d(HALF_SIDE_LENGTH, -HALF_SIDE_LENGTH), 5, 2, 10, 5.26 - (PI / 2)),
+    SwerveModuleData(Translation2d(-HALF_SIDE_LENGTH, -HALF_SIDE_LENGTH), 6, 3, 11, 0.29 + (PI / 2)),
+    SwerveModuleData(Translation2d(HALF_SIDE_LENGTH, HALF_SIDE_LENGTH), 7, 1, 12, 4.77 + (PI / 2)),
+    SwerveModuleData(Translation2d(-HALF_SIDE_LENGTH, HALF_SIDE_LENGTH), 8, 4, 9, 4.76 + (PI / 2)))
 
 val swervePowerFeedforward = SimpleMotorFeedforward(0.0, 0.0, 0.0)
-val swervePowerPID = PIDController(0.0, 0.0, 0.0)
-val swerveAnglePID = PIDController(0.0, 0.0, 0.0)
+val swervePowerPID = PIDController(0.3, 0.0, 0.0)
+// Angle Feedforward
+val swerveAnglePID = PIDController(-0.2, 0.0, 0.0)
 
 val autoForwardPID = PIDController(0.0, 0.0, 0.0)
 val autoAnglePID = PIDController(0.0, 0.0, 0.0)

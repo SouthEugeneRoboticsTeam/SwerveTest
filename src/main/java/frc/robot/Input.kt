@@ -1,6 +1,9 @@
 package frc.robot
 
+import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.wpilibj.XboxController
+import frc.robot.subsystems.Drivetrain
 
 object Input {
     private val controller = XboxController(0)
@@ -10,18 +13,24 @@ object Input {
     fun update() {
         prevNext = currNext
         currNext = controller.aButton
+
+        if (controller.bButton) {
+            Drivetrain.setPose(Pose2d(0.0, 0.0, Rotation2d(0.0)))
+        }
+
+        println(Drivetrain.getPose())
     }
 
     fun getY(): Double {
-        return controller.rightY
+        return controller.leftY
     }
 
     fun getX(): Double {
-        return controller.rightX
+        return -controller.leftX
     }
 
     fun getRot(): Double {
-        return controller.leftX
+        return controller.rightX
     }
 
     fun getNext(): Boolean {
