@@ -7,7 +7,6 @@ import frc.robot.subsystems.Drivetrain
 import kotlin.math.abs
 import kotlin.math.pow
 
-// Rumbling
 class JoystickDrive(private val fieldOrientated: Boolean) : CommandBase() {
     init {
         addRequirements(Drivetrain)
@@ -18,6 +17,7 @@ class JoystickDrive(private val fieldOrientated: Boolean) : CommandBase() {
         val y = Input.getY()
         val rot = Input.getRot()
 
+        // Have rot deadband independent from power deadband
         if (abs(rot) <= constants.rotDeadband && x.pow(2) + y.pow(2) <= constants.powerDeadband * constants.powerDeadband) {
             Drivetrain.stop()
         } else {
@@ -27,6 +27,8 @@ class JoystickDrive(private val fieldOrientated: Boolean) : CommandBase() {
                 Drivetrain.drive(ChassisSpeeds(x * constants.driveSpeed, y * constants.driveSpeed, rot * constants.rotSpeed))
             }
         }
+
+        Input.setRumble(Drivetrain.getAccelerationSqr() * constants.rumbleFactor)
     }
 
     override fun end(interrupted: Boolean) {

@@ -76,6 +76,8 @@ class Constants {
     val driveSpeed = 1.0
     val rotSpeed = 1.0
 
+    val rumbleFactor = 0.1
+
     val tuning = false
 }
 

@@ -24,6 +24,7 @@ import frc.robot.SwerveModuleData
 import frc.robot.constants
 import kotlin.math.PI
 import kotlin.math.atan2
+import kotlin.math.pow
 
 // Rename lock to something more clear
 // Limit power and angle change to protect gears and change stop motor as well
@@ -77,7 +78,7 @@ class SwerveModule(val powerMotor: TalonFX,
 
 object Drivetrain : SubsystemBase(), Reloadable {
     private val kinematics: SwerveDriveKinematics
-    private val gyro = AHRS()
+    private val imu = AHRS()
     private val odometry: SwerveDriveOdometry
 
     private var modules: Array<SwerveModule>
@@ -102,7 +103,7 @@ object Drivetrain : SubsystemBase(), Reloadable {
         modules = modulesList.toTypedArray()
 
         kinematics = SwerveDriveKinematics(*modulePositions.toTypedArray())
-        odometry = SwerveDriveOdometry(kinematics, gyro.rotation2d)
+        odometry = SwerveDriveOdometry(kinematics, imu.rotation2d)
 
         registerReload()
     }
@@ -140,7 +141,7 @@ object Drivetrain : SubsystemBase(), Reloadable {
             states.add(module.state)
         }
 
-        odometry.update(gyro.rotation2d, *states.toTypedArray())
+        odometry.update(imu.rotation2d, *states.toTypedArray())
     }
 
     fun getPose(): Pose2d {
@@ -148,7 +149,11 @@ object Drivetrain : SubsystemBase(), Reloadable {
     }
 
     fun setPose(pose: Pose2d) {
-        return odometry.resetPosition(pose, gyro.rotation2d)
+        return odometry.resetPosition(pose, imu.rotation2d)
+    }
+
+    fun getAccelerationSqr(): Double {
+        return (imu.worldLinearAccelX.pow(2) + imu.worldLinearAccelY.pow(2) + imu.worldLinearAccelZ.pow(2)).toDouble()
     }
 
     private fun feed() {

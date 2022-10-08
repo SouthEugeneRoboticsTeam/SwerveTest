@@ -2,6 +2,7 @@ package frc.robot
 
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.XboxController
 import frc.robot.subsystems.Drivetrain
 
@@ -17,8 +18,6 @@ object Input {
         if (controller.bButton) {
             Drivetrain.setPose(Pose2d(0.0, 0.0, Rotation2d(0.0)))
         }
-
-        println(Drivetrain.getPose())
     }
 
     fun getY(): Double {
@@ -35,5 +34,10 @@ object Input {
 
     fun getNext(): Boolean {
         return !prevNext && currNext
+    }
+
+    fun setRumble(value: Double) {
+        controller.setRumble(GenericHID.RumbleType.kRightRumble, value)
+        controller.setRumble(GenericHID.RumbleType.kLeftRumble, value)
     }
 }

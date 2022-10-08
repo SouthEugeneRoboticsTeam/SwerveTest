@@ -54,4 +54,8 @@ object Robot : TimedRobot() {
     override fun testExit() {
         runTests.cancel()
     }
+
+    override fun disabledInit() {
+        Input.setRumble(0.0)
+    }
 }
