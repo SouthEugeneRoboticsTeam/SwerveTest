@@ -23,6 +23,11 @@ object Robot : TimedRobot() {
 
     override fun robotPeriodic() {
         Input.update()
+
+        if (constants.tuning) {
+            Tuning.update()
+        }
+
         commandScheduler.run()
     }
 

@@ -11,16 +11,24 @@ import frc.robot.*
 import frc.robot.subsystems.Drivetrain
 import java.lang.System.currentTimeMillis
 
-// Feedforward
-class DrivePath(private val trajectory: Trajectory, private val angle: Rotation2d) : CommandBase() {
-    private val driveController = HolonomicDriveController(
-        PIDController(autoForwardPID.p, autoForwardPID.i, autoForwardPID.d),
-        PIDController(autoForwardPID.p, autoForwardPID.i, autoForwardPID.d),
-        ProfiledPIDController(autoAnglePID.p, autoAnglePID.i, autoAnglePID.d, TrapezoidProfile.Constraints(AUTO_ANGLE_MAX_VEL, AUTO_ANGLE_MAX_ACC)))
+class DrivePath(private val trajectory: Trajectory, private val angle: Rotation2d) : CommandBase(), Reloadable {
+    private lateinit var driveController: HolonomicDriveController
     private var startTime: Long = 0
 
     init {
         addRequirements(Drivetrain)
+
+        setController()
+
+        registerReload()
+    }
+
+    private fun setController() {
+        driveController = HolonomicDriveController(
+            PIDController(constants.autoForwardP, constants.autoForwardI, constants.autoForwardD),
+            PIDController(constants.autoForwardP, constants.autoForwardI, constants.autoForwardD),
+            ProfiledPIDController(constants.autoAngleP, constants.autoAngleI, constants.autoAngleD,
+                TrapezoidProfile.Constraints(constants.autoMaxVel, constants.autoMaxAcc)))
     }
 
     override fun initialize() {
@@ -37,5 +45,9 @@ class DrivePath(private val trajectory: Trajectory, private val angle: Rotation2
 
     override fun end(interrupted: Boolean) {
         Drivetrain.stop()
+    }
+
+    override fun reload() {
+        setController()
     }
 }
