@@ -1,6 +1,7 @@
 package frc.robot
 
 import edu.wpi.first.math.geometry.Translation2d
+import edu.wpi.first.math.trajectory.TrajectoryConfig
 import kotlin.math.PI
 
 data class SwerveModuleData(val position: Translation2d, val powerMotorID: Int, val angleMotorID: Int, val angleEncoderID: Int, val angleOffset: Double)
@@ -77,6 +78,13 @@ class Constants {
     val rotSpeed = 1.0
 
     val rumbleFactor = 0.1
+
+    val visionTimeout = 200
+    val visionEndOffset = Translation2d(0.0, 1.0)
+    val visionDisRecalc = 0.2
+    val visionRotRecalc = 0.3
+
+    val trajectoryConfig = TrajectoryConfig(1.0, 1.0)
 
     val tuning = false
 }

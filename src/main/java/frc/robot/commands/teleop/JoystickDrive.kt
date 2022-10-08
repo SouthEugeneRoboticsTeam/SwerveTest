@@ -22,7 +22,7 @@ class JoystickDrive(private val fieldOrientated: Boolean) : CommandBase() {
             Drivetrain.stop()
         } else {
             if (fieldOrientated) {
-                Drivetrain.drive(ChassisSpeeds.fromFieldRelativeSpeeds(x * constants.driveSpeed, y * constants.driveSpeed, rot * constants.rotSpeed, Drivetrain.getPose().rotation))
+                Drivetrain.drive(ChassisSpeeds.fromFieldRelativeSpeeds(x * constants.driveSpeed, y * constants.driveSpeed, rot * constants.rotSpeed, Drivetrain.pose.rotation))
             } else {
                 Drivetrain.drive(ChassisSpeeds(x * constants.driveSpeed, y * constants.driveSpeed, rot * constants.rotSpeed))
             }

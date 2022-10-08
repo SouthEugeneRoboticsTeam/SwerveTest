@@ -36,7 +36,7 @@ class DrivePath(private val trajectory: Trajectory, private val angle: Rotation2
     }
 
     override fun execute() {
-        Drivetrain.drive(driveController.calculate(Drivetrain.getPose(), trajectory.sample((currentTimeMillis() - startTime).toDouble() / 1000), angle))
+        Drivetrain.drive(driveController.calculate(Drivetrain.pose, trajectory.sample((currentTimeMillis() - startTime).toDouble() / 1000), angle))
     }
 
     override fun isFinished(): Boolean {

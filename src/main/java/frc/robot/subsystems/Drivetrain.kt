@@ -144,13 +144,12 @@ object Drivetrain : SubsystemBase(), Reloadable {
         odometry.update(imu.rotation2d, *states.toTypedArray())
     }
 
-    fun getPose(): Pose2d {
-        return odometry.poseMeters
-    }
-
-    fun setPose(pose: Pose2d) {
-        return odometry.resetPosition(pose, imu.rotation2d)
-    }
+    // Getting poseMeters does not calculations
+    var pose: Pose2d
+        get() = odometry.poseMeters
+        set(value) {
+            odometry.resetPosition(value, imu.rotation2d)
+        }
 
     fun getAccelerationSqr(): Double {
         return (imu.worldLinearAccelX.pow(2) + imu.worldLinearAccelY.pow(2) + imu.worldLinearAccelZ.pow(2)).toDouble()
