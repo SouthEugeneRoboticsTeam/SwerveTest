@@ -5,7 +5,7 @@ import time
 import sys
 import math
 
-from cscore import CameraServer, VideoSource, UsbCamera, MjpegServer
+from cscore import CameraServer, VideoSource, UsbCamera
 from networktables import NetworkTablesInstance
 from pupil_apriltags import Detector
 import cv2
@@ -23,6 +23,7 @@ server = False
 cameraConfigs = []
 switchedCameraConfigs = []
 cameras = []
+
 
 def parseError(error):
     """Report parse error."""
@@ -152,7 +153,7 @@ def start_switched_camera(cam_config):
     print("Starting switched camera '{}' on {}".format(cam_config.name, cam_config.key))
     cam_server = CameraServer.getInstance().addSwitchedCamera(cam_config.name)
 
-    def listener(_, key, value, _):
+    def listener(from_obj, key, value, is_new):
         if isinstance(value, float):
             i = int(value)
             if 0 <= i < len(cameras):
@@ -220,31 +221,37 @@ try:
     while True:
         start_time = time.time()
 
-        frame_time, input_img = input_stream.grabFrame()
+        frame_time, input_img = input_stream.grabFrame(None)
 
         if frame_time == 0:
             output_stream.notifyError(input_stream.getError())
             continue
 
-        detections = detector.detect(cv2.cvtColor(input_img, cv2.COLOR_BGR2GRAY), estimate_tag_pose=True, camera_params=[1078.03779, 1084.50988, 580.850545, 245.959325], tag_size=0.1)
+        detections = detector.detect(cv2.cvtColor(input_img, cv2.COLOR_BGR2GRAY), estimate_tag_pose=True,
+                                     camera_params=[1078.03779, 1084.50988, 580.850545, 245.959325], tag_size=0.1)
 
         vision_table.putBoolean('is_target', len(detections) > 0)
 
         is_detection = len(detections) > 0
         vision_table.putBoolean('is_target', is_detection)
         if is_detection:
-            closest = max(detections, key=lambda detection: detection.pose_t[0] ** 2 + detection.pose_t[1] ** 2 + detection.pose_t[2] ** 2)
+            closest = max(detections,
+                          key=lambda detection: detection.pose_t[0] ** 2 + detection.pose_t[1] ** 2 + detection.pose_t[
+                              2] ** 2)
 
             vision_table.putNumberArray('position', [value[0] for value in closest.pose_t])
             vision_table.putNumberArray('rotation', [value for row in closest.pose_R for value in row])
 
-            radius = int(math.sqrt((closest.corners[0][0] - closest.corners[1][0]) ** 2 + (closest.corners[0][1] - closest.corners[1][1]) ** 2) / 2)
+            radius = int(math.sqrt((closest.corners[0][0] - closest.corners[1][0]) ** 2 + (
+                        closest.corners[0][1] - closest.corners[1][1]) ** 2) / 2)
             cv2.circle(input_img, (int(closest.center[0]), int(closest.center[1])), radius, (0, 0, 255), 1)
 
-            cv2.polylines(input_img, np.array([detection.corners for detection in detections], dtype=np.int32), True, (0, 255, 0))
+            cv2.polylines(input_img, np.array([detection.corners for detection in detections], dtype=np.int32), True,
+                          (0, 255, 0))
             for detection in detections:
                 dis = math.sqrt(detection.pose_t[0] ** 2 + detection.pose_t[1] ** 2 + detection.pose_t[2] ** 2)
-                cv2.putText(input_img, '{:.1E}'.format(dis), (int(detection.center[0]), int(detection.center[1])), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0))
+                cv2.putText(input_img, '{:.1E}'.format(dis), (int(detection.center[0]), int(detection.center[1])),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0))
 
         processing_time = time.time() - start_time
         fps = 1 / processing_time

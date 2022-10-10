@@ -48,11 +48,8 @@ class DriveAprilTag : CommandBase(), Reloadable {
 
     private fun tryCalculatePath() {
         if (Vision.targetPose != null) {
-            val diff = Vision.targetPose!!
-
             // Yes it is swerve so the pose rotation shouldn't matter, but it will generate a nicer trajectory than other angles
             trajectory = TrajectoryGenerator.generateTrajectory(Drivetrain.pose, mutableListOf(), getVisionEndPose(), constants.trajectoryConfig)
-            angle = Drivetrain.pose.rotation + Rotation2d(atan2(diff.y, diff.x))
         }
     }
 
@@ -75,7 +72,7 @@ class DriveAprilTag : CommandBase(), Reloadable {
             }
 
             // Yes could return the line in the if, but this is clearer
-            if ((shouldEndPose.translation - endPose.translation).norm < constants.visionDisRecalc || abs(rotationDiff) < constants.visionRotRecalc) {
+            if ((shouldEndPose.translation - endPose.translation).norm >= constants.visionDisRecalc || abs(rotationDiff) >= constants.visionRotRecalc) {
                 return true
             }
         }
@@ -90,6 +87,10 @@ class DriveAprilTag : CommandBase(), Reloadable {
     override fun execute() {
         if (shouldRecalculate()) {
             tryCalculatePath()
+        }
+
+        if (Vision.targetPose != null) {
+            angle = Drivetrain.pose.rotation + Rotation2d(atan2(Vision.targetPose!!.y, Vision.targetPose!!.x))
         }
 
         if (trajectory != null && angle != null) {
