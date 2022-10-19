@@ -62,7 +62,7 @@ class SwerveModule(val powerMotor: TalonFX,
         angleMotor.set(anglePID.calculate(state.angle.radians, optimized.angle.radians))
     }
 
-    fun lock() {
+    fun enterBrakePos() {
         set(SwerveModuleState(0.0, centerRotation))
     }
 
@@ -172,9 +172,9 @@ object Drivetrain : SubsystemBase(), Reloadable {
         feed()
     }
 
-    fun lock() {
+    fun enterBrakePos() {
         for (module in modules) {
-            module.lock()
+            module.enterBrakePos()
         }
 
         feed()

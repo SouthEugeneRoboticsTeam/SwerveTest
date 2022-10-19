@@ -43,7 +43,7 @@ class DriveAprilTag : CommandBase(), Reloadable {
     }
 
     private fun getVisionEndPose(): Pose2d {
-        return Pose2d(Drivetrain.pose.translation + Vision.targetPose!!.translation + constants.visionEndOffset, -Vision.targetPose!!.rotation)
+        return Pose2d(Vision.targetPose!!.translation + constants.visionEndOffset, -Vision.targetPose!!.rotation)
     }
 
     private fun tryCalculatePath() {
@@ -57,23 +57,25 @@ class DriveAprilTag : CommandBase(), Reloadable {
         if (trajectory == null || angle == null) {
             return true
         } else {
-            val endPose = trajectory!!.sample(trajectory!!.totalTimeSeconds).poseMeters
-            val shouldEndPose = getVisionEndPose()
+            if (Vision.targetPose != null) {
+                val endPose = trajectory!!.sample(trajectory!!.totalTimeSeconds).poseMeters
+                val shouldEndPose = getVisionEndPose()
 
-            // Maybe move to util function
-            // No modulo needed because rotation is clamped between -pi and pi
-            var rotationDiff = (shouldEndPose.rotation - endPose.rotation).radians
-            if (rotationDiff > PI / 2) {
-                rotationDiff -= PI
-            }
+                // Maybe move to util function
+                // No modulo needed because rotation is clamped between -pi and pi
+                var rotationDiff = (shouldEndPose.rotation - endPose.rotation).radians
+                if (rotationDiff > PI / 2) {
+                    rotationDiff -= PI
+                }
 
-            if (rotationDiff < -PI / 2) {
-                rotationDiff += PI
-            }
+                if (rotationDiff < -PI / 2) {
+                    rotationDiff += PI
+                }
 
-            // Yes could return the line in the if, but this is clearer
-            if ((shouldEndPose.translation - endPose.translation).norm >= constants.visionDisRecalc || abs(rotationDiff) >= constants.visionRotRecalc) {
-                return true
+                // Yes could return the line in the if, but this is clearer
+                if ((shouldEndPose.translation - endPose.translation).norm >= constants.visionDisRecalc || abs(rotationDiff) >= constants.visionRotRecalc) {
+                    return true
+                }
             }
         }
 
@@ -90,7 +92,8 @@ class DriveAprilTag : CommandBase(), Reloadable {
         }
 
         if (Vision.targetPose != null) {
-            angle = Drivetrain.pose.rotation + Rotation2d(atan2(Vision.targetPose!!.y, Vision.targetPose!!.x))
+            val relativeTrans = Vision.targetPose!!.translation - Drivetrain.pose.translation
+            angle = Drivetrain.pose.rotation + Rotation2d(atan2(relativeTrans.y, relativeTrans.x))
         }
 
         if (trajectory != null && angle != null) {

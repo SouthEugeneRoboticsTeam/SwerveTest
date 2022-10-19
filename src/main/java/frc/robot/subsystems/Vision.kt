@@ -9,7 +9,6 @@ import frc.robot.constants
 import java.lang.System.currentTimeMillis
 import kotlin.math.atan2
 
-// Should use Drivetrain position for increase accuracy (Drivetrain periodic may not run first which it should)
 object Vision : SubsystemBase() {
     private val visionTable = NetworkTableInstance.getDefault().getTable("vision")
     private val isTargetEntry = visionTable.getEntry("is_target")
@@ -27,7 +26,8 @@ object Vision : SubsystemBase() {
         targetPose = if (isTargetEntry.getBoolean(false) && lastUpdate != null && lastUpdate <= constants.visionTimeout) {
             val rawPos = targetPosEntry.getDoubleArray(DoubleArray(0))
             val rawRot = targetAngleEntry.getDoubleArray(DoubleArray(0))
-            Pose2d(Translation2d(rawPos[0], rawPos[2]), Rotation2d(atan2(rawRot[1], rawRot[0])))
+            // Drivetrain.pose.translation may be from the previous periodic
+            Pose2d(Translation2d(rawPos[0], rawPos[2]) + Drivetrain.pose.translation, Rotation2d(atan2(rawRot[1], rawRot[0])))
         } else {
             null
         }
