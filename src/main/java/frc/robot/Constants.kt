@@ -7,15 +7,15 @@ import kotlin.math.PI
 data class SwerveModuleData(val position: Translation2d, val powerMotorID: Int, val angleMotorID: Int, val angleEncoderID: Int, val angleOffset: Double)
 
 object TunableConstants {
-    val swervePowerS = TunableNumber("Swerve Power S", 0.0)
-    val swervePowerV = TunableNumber("Swerve Power V", 0.0)
-    val swervePowerA = TunableNumber("Swerve Power A", 0.0)
+    val swervePowerS = TunableNumber("Swerve Power S", 0.60983)
+    val swervePowerV = TunableNumber("Swerve Power V", 2.601311978)
+    val swervePowerA = TunableNumber("Swerve Power A", 0.159883071)
 
-    val swervePowerP = TunableNumber("Swerve Power P", 0.3)
+    val swervePowerP = TunableNumber("Swerve Power P", 2.730003958)
     val swervePowerI = TunableNumber("Swerve Power I", 0.0)
     val swervePowerD = TunableNumber("Swerve Power D", 0.0)
 
-    val swerveAngleP = TunableNumber("Swerve Angle P", 0.2)
+    val swerveAngleP = TunableNumber("Swerve Angle P", 0.3)
     val swerveAngleI = TunableNumber("Swerve Angle I", 0.0)
     val swerveAngleD = TunableNumber("Swerve Angle D", 0.0)
 
@@ -23,7 +23,7 @@ object TunableConstants {
     val autoForwardI = TunableNumber("Auto Forward I", 0.0)
     val autoForwardD = TunableNumber("Auto Forward D", 0.0)
 
-    val autoAngleP = TunableNumber("Auto Angle P", 0.0)
+    val autoAngleP = TunableNumber("Auto Angle P", 0.01)
     val autoAngleI = TunableNumber("Auto Angle I", 0.0)
     val autoAngleD = TunableNumber("Auto Angle D", 0.0)
 
@@ -39,8 +39,7 @@ class Constants {
         SwerveModuleData(Translation2d(halfSideLength, -halfSideLength), 5, 2, 10, 5.26 - (PI / 2)),
         SwerveModuleData(Translation2d(-halfSideLength, -halfSideLength), 6, 3, 11, 0.29 + (PI / 2)),
         SwerveModuleData(Translation2d(halfSideLength, halfSideLength), 7, 1, 12, 4.77 + (PI / 2)),
-        SwerveModuleData(Translation2d(-halfSideLength, halfSideLength), 8, 4, 9, 4.76 + (PI / 2))
-    )
+        SwerveModuleData(Translation2d(-halfSideLength, halfSideLength), 8, 4, 9, 4.76 + (PI / 2)))
 
     val swervePowerS = TunableConstants.swervePowerS.value
     val swervePowerV = TunableConstants.swervePowerV.value
@@ -65,8 +64,9 @@ class Constants {
     val autoMaxVel = TunableConstants.autoMaxVel.value
     val autoMaxAcc = TunableConstants.autoMaxAcc.value
 
+    // Figure out the divide by 10
     // PI * diameter / (gear ratio * counts per rev)
-    val powerEncoderMultiplier = PI * 0.1016 / (8.14 * 2048)
+    val powerEncoderMultiplier = (PI * 0.1016 / (8.14 * 2048 / 10))
 
     // Degrees to radians
     val angleEncoderMultiplier = 0.01745329251
@@ -77,14 +77,14 @@ class Constants {
     val driveSpeed = 1.0
     val rotSpeed = 1.0
 
-    val rumbleFactor = 0.1
+    val rumbleFactor = 0.001
 
     val visionTimeout = 200
     val visionEndOffset = Translation2d(0.0, 1.0)
     val visionDisRecalc = 0.2
     val visionRotRecalc = 0.3
 
-    val trajectoryConfig = TrajectoryConfig(1.0, 1.0)
+    val trajectoryConfig = TrajectoryConfig(1.0, 0.5)
 
     val tuning = false
 }

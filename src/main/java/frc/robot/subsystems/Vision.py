@@ -6,211 +6,30 @@ import sys
 import math
 
 from cscore import CameraServer, VideoSource, UsbCamera
-from networktables import NetworkTablesInstance
+from networktables import NetworkTables
 from pupil_apriltags import Detector
 import cv2
 import numpy as np
 
-configFile = "/boot/frc.json"
+server = CameraServer()
 
+with open('/boot/frc.json') as f:
+    config = json.load(f)
+camera = config['cameras'][0]
 
-class CameraConfig:
-    pass
+width = camera['width']
+height = camera['height']
 
-
-team = None
-server = False
-cameraConfigs = []
-switchedCameraConfigs = []
-cameras = []
-
-
-def parseError(error):
-    """Report parse error."""
-    print("config error in '" + configFile + "': " + error, file=sys.stderr)
-
-
-def read_camera_config(cam_config):
-    cam = CameraConfig()
-
-    # name
-    try:
-        cam.name = cam_config["name"]
-    except KeyError:
-        parseError("could not read camera name")
-        return False
-
-    # path
-    try:
-        cam.path = cam_config["path"]
-    except KeyError:
-        parseError("camera '{}': could not read path".format(cam.name))
-        return False
-
-    # stream properties
-    cam.streamConfig = cam_config.get("stream")
-
-    cam.config = cam_config
-
-    cameraConfigs.append(cam)
-    return True
-
-
-def read_switched_camera_config(cam_config):
-    """Read single switched camera configuration."""
-    cam = CameraConfig()
-
-    # name
-    try:
-        cam.name = cam_config["name"]
-    except KeyError:
-        parseError("could not read switched camera name")
-        return False
-
-    # path
-    try:
-        cam.key = cam_config["key"]
-    except KeyError:
-        parseError("switched camera '{}': could not read key".format(cam.name))
-        return False
-
-    switchedCameraConfigs.append(cam)
-    return True
-
-
-def read_config():
-    """Read configuration file."""
-    global team
-    global server
-
-    # parse file
-    try:
-        with open(configFile, "rt", encoding="utf-8") as f:
-            j = json.load(f)
-    except OSError as err:
-        print("could not open '{}': {}".format(configFile, err), file=sys.stderr)
-        return False
-
-    # top level must be an object
-    if not isinstance(j, dict):
-        parseError("must be JSON object")
-        return False
-
-    # team number
-    try:
-        team = j["team"]
-    except KeyError:
-        parseError("could not read team number")
-        return False
-
-    # ntmode (optional)
-    if "ntmode" in j:
-        text = j["ntmode"]
-        if text.lower() == "client":
-            server = False
-        elif text.lower() == "server":
-            server = True
-        else:
-            parseError("could not understand ntmode value '{}'".format(text))
-
-    # cameras
-    try:
-        cams = j["cameras"]
-    except KeyError:
-        parseError("could not read cameras")
-        return False
-    for cam in cams:
-        if not read_camera_config(cam):
-            return False
-
-    # switched cameras
-    if "switched cameras" in j:
-        for cam in j["switched cameras"]:
-            if not read_switched_camera_config(cam):
-                return False
-
-    return True
-
-
-def start_camera(cam_config):
-    """Start running the camera."""
-    print("Starting camera '{}' on {}".format(cam_config.name, cam_config.path))
-    inst = CameraServer.getInstance()
-    usb_cam = UsbCamera(cam_config.name, cam_config.path)
-    usb_server = inst.startAutomaticCapture(camera=usb_cam, return_server=True)
-
-    usb_cam.setConfigJson(json.dumps(cam_config.config))
-    usb_cam.setConnectionStrategy(VideoSource.ConnectionStrategy.kKeepOpen)
-
-    if cam_config.streamConfig is not None:
-        usb_server.setConfigJson(json.dumps(cam_config.streamConfig))
-
-    return usb_cam
-
-
-def start_switched_camera(cam_config):
-    """Start running the switched camera."""
-    print("Starting switched camera '{}' on {}".format(cam_config.name, cam_config.key))
-    cam_server = CameraServer.getInstance().addSwitchedCamera(cam_config.name)
-
-    def listener(from_obj, key, value, is_new):
-        if isinstance(value, float):
-            i = int(value)
-            if 0 <= i < len(cameras):
-                cam_server.setSource(cameras[i])
-        elif isinstance(value, str):
-            for i in range(len(cameraConfigs)):
-                if value == cameraConfigs[i].name:
-                    cam_server.setSource(cameras[i])
-                    break
-
-    NetworkTablesInstance.getDefault().getEntry(cam_config.key).addListener(
-        listener,
-        NetworkTablesInstance.NotifyFlags.IMMEDIATE |
-        NetworkTablesInstance.NotifyFlags.NEW |
-        NetworkTablesInstance.NotifyFlags.UPDATE)
-
-    return cam_server
-
-
-if len(sys.argv) >= 2:
-    configFile = sys.argv[1]
-
-# read configuration
-if not read_config():
-    sys.exit(1)
-
-# start NetworkTables
-ntinst = NetworkTablesInstance.getDefault()
-if server:
-    print("Setting up NetworkTables server")
-    ntinst.startServer()
-else:
-    print("Setting up NetworkTables client for team {}".format(team))
-    ntinst.startClientTeam(team)
-    ntinst.startDSClient()
-
-# start cameras
-for config in cameraConfigs:
-    cameras.append(start_camera(config))
-
-# start switched cameras
-for config in switchedCameraConfigs:
-    start_switched_camera(config)
-
-server = CameraServer.getInstance()
-
-camera = cameras[0]
-detector = Detector(families='tag36h11')
-
-width = 160
-height = 120
+server.startAutomaticCapture()
 
 input_stream = server.getVideo()
 output_stream = server.putVideo('Processed', width, height)
 
 # Table for vision output information
-vision_table = ntinst.getTable('vision')
+vision_table = NetworkTables.getTable('vision')
+
+cam_params = [699.86650947, 358.12604168, 699.46805447, 177.13035609]
+detector = Detector(families='tag36h11')
 
 # Wait for NetworkTables to start
 time.sleep(0.5)
@@ -227,8 +46,9 @@ try:
             output_stream.notifyError(input_stream.getError())
             continue
 
+        # 200 mm target for some reason tag_size seems to off by x10
         detections = detector.detect(cv2.cvtColor(input_img, cv2.COLOR_BGR2GRAY), estimate_tag_pose=True,
-                                     camera_params=[1078.03779, 1084.50988, 580.850545, 245.959325], tag_size=0.1)
+                                     camera_params=[1078.03779, 1084.50988, 580.850545, 245.959325], tag_size=0.02)
 
         vision_table.putBoolean('is_target', len(detections) > 0)
 

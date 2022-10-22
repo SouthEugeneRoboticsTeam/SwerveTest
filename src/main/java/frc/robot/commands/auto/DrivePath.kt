@@ -3,6 +3,7 @@ package frc.robot.commands.auto
 import edu.wpi.first.math.controller.HolonomicDriveController
 import edu.wpi.first.math.controller.PIDController
 import edu.wpi.first.math.controller.ProfiledPIDController
+import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.trajectory.Trajectory
 import edu.wpi.first.math.trajectory.TrapezoidProfile
@@ -32,6 +33,7 @@ class DrivePath(private val trajectory: Trajectory, private val angle: Rotation2
     }
 
     override fun initialize() {
+        Drivetrain.pose = Pose2d()
         startTime = currentTimeMillis()
     }
 
@@ -40,7 +42,7 @@ class DrivePath(private val trajectory: Trajectory, private val angle: Rotation2
     }
 
     override fun isFinished(): Boolean {
-        return (startTime - currentTimeMillis()) / 1000 > trajectory.totalTimeSeconds
+        return (startTime - currentTimeMillis()).toDouble() / 1000 > trajectory.totalTimeSeconds
     }
 
     override fun end(interrupted: Boolean) {

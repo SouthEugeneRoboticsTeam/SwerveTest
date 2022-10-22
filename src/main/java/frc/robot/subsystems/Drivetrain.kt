@@ -58,7 +58,10 @@ class SwerveModule(val powerMotor: TalonFX,
         // Using state because it should be updated and getVelocity and getAngle (probably) spend time over CAN
         val optimized = SwerveModuleState.optimize(wanted, state.angle)
 
-        powerMotor.set(ControlMode.PercentOutput, powerFeedforward.calculate(optimized.speedMetersPerSecond) + powerPID.calculate(state.speedMetersPerSecond, optimized.speedMetersPerSecond))
+        val feedforward = powerFeedforward.calculate(optimized.speedMetersPerSecond)
+        val pid = powerPID.calculate(state.speedMetersPerSecond, optimized.speedMetersPerSecond)
+        // Figure out voltage stuff
+        powerMotor.set(ControlMode.PercentOutput, (feedforward + pid) / 12.0)
         angleMotor.set(anglePID.calculate(state.angle.radians, optimized.angle.radians))
     }
 
@@ -85,18 +88,18 @@ object Drivetrain : SubsystemBase(), Reloadable {
 
     init {
         val modulePositions = mutableListOf<Translation2d>()
-
         val modulesList = mutableListOf<SwerveModule>()
 
         for (moduleData in constants.swerveModuleData) {
             val powerMotor = TalonFX(moduleData.powerMotorID)
-            powerMotor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative)
+            powerMotor.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor)
             powerMotor.setNeutralMode(NeutralMode.Brake)
 
             val angleMotor = CANSparkMax(moduleData.angleMotorID, CANSparkMaxLowLevel.MotorType.kBrushless)
             angleMotor.idleMode = CANSparkMax.IdleMode.kBrake
             angleMotor.inverted = true
 
+            modulePositions.add(moduleData.position)
             modulesList.add(createModule(powerMotor, angleMotor, moduleData))
         }
 
@@ -151,8 +154,8 @@ object Drivetrain : SubsystemBase(), Reloadable {
             odometry.resetPosition(value, imu.rotation2d)
         }
 
-    fun getAccelerationSqr(): Double {
-        return (imu.worldLinearAccelX.pow(2) + imu.worldLinearAccelY.pow(2) + imu.worldLinearAccelZ.pow(2)).toDouble()
+    fun getAccel(): Double {
+        return (imu.rawAccelX.pow(2) + imu.rawAccelY.pow(2) + imu.rawAccelZ.pow(2)).toDouble()
     }
 
     private fun feed() {

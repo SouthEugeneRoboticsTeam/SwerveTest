@@ -19,7 +19,7 @@ class TunableNumber(private val name: String, var value: Double) {
     }
 
     fun update(): Boolean {
-        val curr = SmartDashboard.getNumber(name, value)
+        val curr = SmartDashboard.getNumber("Tuning/$name", value)
         if (value != curr) {
             value = curr
             return true

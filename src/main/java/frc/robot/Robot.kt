@@ -17,7 +17,7 @@ object Robot : TimedRobot() {
         Pose2d(0.0, 0.0, Rotation2d(0.0)),
         listOf(),
         Pose2d(1.0, 0.0, Rotation2d(0.0)),
-        constants.trajectoryConfig), Rotation2d(90.0))
+        constants.trajectoryConfig), Rotation2d(0.0))
     private val runTests = RunTests()
 
     override fun robotPeriodic() {
@@ -26,6 +26,8 @@ object Robot : TimedRobot() {
         if (constants.tuning) {
             Tuning.update()
         }
+
+        Shuffleboard.update()
 
         commandScheduler.run()
     }

@@ -28,10 +28,12 @@ class JoystickDrive(private val fieldOrientated: Boolean) : CommandBase() {
             }
         }
 
-        Input.setRumble(Drivetrain.getAccelerationSqr() * constants.rumbleFactor)
+        // Maybe rumble when driving stops
+        Input.setRumble(Drivetrain.getAccel() * constants.rumbleFactor)
     }
 
     override fun end(interrupted: Boolean) {
         Drivetrain.stop()
+        Input.setRumble(0.0)
     }
 }
