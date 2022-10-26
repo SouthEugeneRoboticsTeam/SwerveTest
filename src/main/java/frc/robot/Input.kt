@@ -16,7 +16,7 @@ object Input {
         currNext = controller.aButton
 
         if (controller.bButton) {
-            Drivetrain.pose = Pose2d(0.0, 0.0, Rotation2d(0.0))
+            Drivetrain.pose = Pose2d(Drivetrain.pose.translation, Rotation2d(0.0))
         }
     }
 

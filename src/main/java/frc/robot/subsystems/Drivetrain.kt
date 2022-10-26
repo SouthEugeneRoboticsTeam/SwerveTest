@@ -154,8 +154,8 @@ object Drivetrain : SubsystemBase(), Reloadable {
             odometry.resetPosition(value, imu.rotation2d)
         }
 
-    fun getAccel(): Double {
-        return (imu.rawAccelX.pow(2) + imu.rawAccelY.pow(2) + imu.rawAccelZ.pow(2)).toDouble()
+    fun getAccelSqr(): Double {
+        return (imu.worldLinearAccelY.pow(2) + imu.worldLinearAccelX.pow(2)).toDouble()
     }
 
     private fun feed() {

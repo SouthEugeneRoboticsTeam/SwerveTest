@@ -3,7 +3,6 @@ package frc.robot.commands.auto
 import edu.wpi.first.math.controller.HolonomicDriveController
 import edu.wpi.first.math.controller.PIDController
 import edu.wpi.first.math.controller.ProfiledPIDController
-import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.trajectory.Trajectory
 import edu.wpi.first.math.trajectory.TrapezoidProfile
@@ -25,15 +24,15 @@ class DrivePath(private val trajectory: Trajectory, private val angle: Rotation2
     }
 
     private fun setController() {
+        // Maybe make into function for both autos
         driveController = HolonomicDriveController(
             PIDController(constants.autoForwardP, constants.autoForwardI, constants.autoForwardD),
             PIDController(constants.autoForwardP, constants.autoForwardI, constants.autoForwardD),
-            ProfiledPIDController(constants.autoAngleP, constants.autoAngleI, constants.autoAngleD,
+            ProfiledPIDController(-constants.autoAngleP, -constants.autoAngleI, -constants.autoAngleD,
                 TrapezoidProfile.Constraints(constants.autoMaxVel, constants.autoMaxAcc)))
     }
 
     override fun initialize() {
-        Drivetrain.pose = Pose2d()
         startTime = currentTimeMillis()
     }
 

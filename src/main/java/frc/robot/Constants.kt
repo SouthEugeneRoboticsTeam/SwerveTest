@@ -23,12 +23,12 @@ object TunableConstants {
     val autoForwardI = TunableNumber("Auto Forward I", 0.0)
     val autoForwardD = TunableNumber("Auto Forward D", 0.0)
 
-    val autoAngleP = TunableNumber("Auto Angle P", 0.01)
+    val autoAngleP = TunableNumber("Auto Angle P", 0.0)//1.5)
     val autoAngleI = TunableNumber("Auto Angle I", 0.0)
     val autoAngleD = TunableNumber("Auto Angle D", 0.0)
 
-    val autoMaxVel = TunableNumber("Auto Max Vel", 0.0)
-    val autoMaxAcc = TunableNumber("Auto Max Acc", 0.0)
+    val autoAngleMaxVel = TunableNumber("Auto Angle Max Vel", 0.8)
+    val autoAngleMaxAcc = TunableNumber("Auto Angle Max Acc", 1.5)
 }
 
 // Maybe separate into true constants and tunable constants to make clear what needs to be reloaded
@@ -61,8 +61,8 @@ class Constants {
     val autoAngleI = TunableConstants.autoAngleI.value
     val autoAngleD = TunableConstants.autoAngleD.value
 
-    val autoMaxVel = TunableConstants.autoMaxVel.value
-    val autoMaxAcc = TunableConstants.autoMaxAcc.value
+    val autoMaxVel = TunableConstants.autoAngleMaxVel.value
+    val autoMaxAcc = TunableConstants.autoAngleMaxAcc.value
 
     // Figure out the divide by 10
     // PI * diameter / (gear ratio * counts per rev)
@@ -74,17 +74,19 @@ class Constants {
     val powerDeadband = 0.1
     val rotDeadband = 0.1
 
-    val driveSpeed = 1.0
-    val rotSpeed = 1.0
+    val driveSpeed = 0.5
+    val rotSpeed = 2.0
 
-    val rumbleFactor = 0.001
+    val joystickChangeSpeed = 0.1
+
+    val rumbleFactor = 0.2
 
     val visionTimeout = 200
-    val visionEndOffset = Translation2d(0.0, 1.0)
+    val visionEndOffset = Translation2d(0.0, -1.0)
     val visionDisRecalc = 0.2
     val visionRotRecalc = 0.3
 
-    val trajectoryConfig = TrajectoryConfig(1.0, 0.5)
+    val trajectoryConfig = TrajectoryConfig(2.0, 2.0)
 
     val tuning = false
 }

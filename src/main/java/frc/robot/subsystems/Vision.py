@@ -2,20 +2,23 @@
 
 import json
 import time
-import sys
 import math
 
 from cscore import CameraServer, VideoSource, UsbCamera
-from networktables import NetworkTables
+from networktables import NetworkTablesInstance
 from pupil_apriltags import Detector
 import cv2
 import numpy as np
 
-server = CameraServer()
+server = CameraServer.getInstance()
 
 with open('/boot/frc.json') as f:
     config = json.load(f)
 camera = config['cameras'][0]
+
+ntinst = NetworkTablesInstance.getDefault()
+ntinst.startClientTeam(2521)
+ntinst.startDSClient()
 
 width = camera['width']
 height = camera['height']
@@ -26,9 +29,9 @@ input_stream = server.getVideo()
 output_stream = server.putVideo('Processed', width, height)
 
 # Table for vision output information
-vision_table = NetworkTables.getTable('vision')
+vision_table = ntinst.getTable('Vision')
 
-cam_params = [699.86650947, 358.12604168, 699.46805447, 177.13035609]
+cam_params = [685.55496655, 696.9549483, 329.08110703, 191.24604484]
 detector = Detector(families='tag36h11')
 
 # Wait for NetworkTables to start
@@ -46,21 +49,22 @@ try:
             output_stream.notifyError(input_stream.getError())
             continue
 
-        # 200 mm target for some reason tag_size seems to off by x10
-        detections = detector.detect(cv2.cvtColor(input_img, cv2.COLOR_BGR2GRAY), estimate_tag_pose=True,
-                                     camera_params=[1078.03779, 1084.50988, 580.850545, 245.959325], tag_size=0.02)
 
-        vision_table.putBoolean('is_target', len(detections) > 0)
+        # Figure out tag size
+        detections = detector.detect(cv2.cvtColor(input_img, cv2.COLOR_BGR2GRAY), estimate_tag_pose=True,
+                                     camera_params=cam_params, tag_size=0.15 / 4.4)
+
+        vision_table.putBoolean('Is Target', len(detections) > 0)
 
         is_detection = len(detections) > 0
-        vision_table.putBoolean('is_target', is_detection)
+        vision_table.putBoolean('Is Target', is_detection)
         if is_detection:
             closest = max(detections,
                           key=lambda detection: detection.pose_t[0] ** 2 + detection.pose_t[1] ** 2 + detection.pose_t[
                               2] ** 2)
 
-            vision_table.putNumberArray('position', [value[0] for value in closest.pose_t])
-            vision_table.putNumberArray('rotation', [value for row in closest.pose_R for value in row])
+            vision_table.putNumberArray('Position', [value[0] for value in closest.pose_t])
+            vision_table.putNumberArray('Rotation', [value for row in closest.pose_R for value in row])
 
             radius = int(math.sqrt((closest.corners[0][0] - closest.corners[1][0]) ** 2 + (
                         closest.corners[0][1] - closest.corners[1][1]) ** 2) / 2)
@@ -80,5 +84,5 @@ try:
         output_stream.putFrame(input_img)
 
 except Exception as e:
-    vision_table.putBoolean('is_target', False)
+    vision_table.putBoolean('Is Target', False)
     print(e)

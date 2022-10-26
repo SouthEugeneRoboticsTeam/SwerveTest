@@ -25,7 +25,7 @@ class DriveAprilTag : CommandBase(), Reloadable {
     private var startTime: Long = 0
 
     init {
-        addRequirements(Drivetrain)
+        addRequirements(Drivetrain, Vision)
 
         setController()
 
@@ -33,11 +33,11 @@ class DriveAprilTag : CommandBase(), Reloadable {
     }
 
     private fun setController() {
+        // Maybe make into function for both autos
         driveController = HolonomicDriveController(
             PIDController(constants.autoForwardP, constants.autoForwardI, constants.autoForwardD),
             PIDController(constants.autoForwardP, constants.autoForwardI, constants.autoForwardD),
-            ProfiledPIDController(
-                constants.autoAngleP, constants.autoAngleI, constants.autoAngleD,
+            ProfiledPIDController(-constants.autoAngleP, -constants.autoAngleI, -constants.autoAngleD,
                 TrapezoidProfile.Constraints(constants.autoMaxVel, constants.autoMaxAcc))
         )
     }
@@ -93,6 +93,7 @@ class DriveAprilTag : CommandBase(), Reloadable {
 
         if (Vision.targetPose != null) {
             val relativeTrans = Vision.targetPose!!.translation - Drivetrain.pose.translation
+            println(relativeTrans)
             angle = Drivetrain.pose.rotation + Rotation2d(atan2(relativeTrans.y, relativeTrans.x))
         }
 
