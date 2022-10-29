@@ -49,7 +49,6 @@ try:
             output_stream.notifyError(input_stream.getError())
             continue
 
-
         # Figure out tag size
         detections = detector.detect(cv2.cvtColor(input_img, cv2.COLOR_BGR2GRAY), estimate_tag_pose=True,
                                      camera_params=cam_params, tag_size=0.15 / 4.4)

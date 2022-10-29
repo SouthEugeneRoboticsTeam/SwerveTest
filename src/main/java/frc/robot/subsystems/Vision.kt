@@ -22,7 +22,7 @@ object Vision : SubsystemBase() {
             val rawPos = targetPosEntry.getDoubleArray(DoubleArray(0))
             val rawRot = targetAngleEntry.getDoubleArray(DoubleArray(0))
             // Drivetrain.pose.translation may be from the previous periodic
-            Pose2d(Translation2d(rawPos[0], rawPos[2]).rotateBy(Drivetrain.pose.rotation) + Drivetrain.pose.translation, Rotation2d(atan2(rawRot[1], rawRot[0])))
+            Pose2d(Translation2d(-rawPos[0], -rawPos[2]).rotateBy(Drivetrain.pose.rotation) + Drivetrain.pose.translation, Rotation2d(atan2(rawRot[1], rawRot[0])))
         } else {
             null
         }
