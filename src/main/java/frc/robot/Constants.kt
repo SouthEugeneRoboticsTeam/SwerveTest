@@ -71,18 +71,17 @@ class Constants {
     // Degrees to radians
     val angleEncoderMultiplier = 0.01745329251
 
-    val powerDeadband = 0.1
+    val powerDeadband = 0.05
     val rotDeadband = 0.1
+    val joystickDeadband = 0.1
 
-    val driveSpeed = 0.5
+    val driveSpeed = 1.0
     val rotSpeed = 2.0
 
     val joystickChangeSpeed = 0.1
 
     val rumbleFactor = 0.2
 
-    val visionTimeout = 200
-    val visionEndOffset = Translation2d(0.0, -1.0)
     val visionDisRecalc = 0.2
     val visionRotRecalc = 0.3
 

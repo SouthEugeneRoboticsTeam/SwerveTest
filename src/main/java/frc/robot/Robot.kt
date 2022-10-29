@@ -1,6 +1,7 @@
 package frc.robot
 
 import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.wpilibj.TimedRobot
 import edu.wpi.first.wpilibj2.command.CommandScheduler
 import frc.robot.commands.auto.DriveAprilTag
@@ -12,7 +13,7 @@ object Robot : TimedRobot() {
     private val commandScheduler = CommandScheduler.getInstance()
 
     private val joystickDrive = JoystickDrive(true)
-    private val auto = DriveAprilTag()
+    private val auto = DriveAprilTag(Translation2d(-1.0, 0.0))
     /*private val auto = DrivePath(TrajectoryGenerator.generateTrajectory(
         Pose2d(0.0, 0.0, Rotation2d(0.0)),
         listOf(Translation2d(1.0, 1.0),

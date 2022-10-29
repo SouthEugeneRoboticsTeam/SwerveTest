@@ -26,10 +26,10 @@ class JoystickDrive(private val fieldOrientated: Boolean) : CommandBase() {
     }
 
     override fun execute() {
-        var currX = Input.getX()
-        var currY = Input.getY()
+        var currX = Input.getX() * constants.driveSpeed
+        var currY = Input.getY() * constants.driveSpeed
 
-        if (currX.pow(2) + currY.pow(2) <= constants.powerDeadband * constants.powerDeadband) {
+        if (currX.pow(2) + currY.pow(2) <= constants.joystickDeadband * constants.joystickDeadband) {
             currX = 0.0
             currY = 0.0
         }
@@ -51,23 +51,22 @@ class JoystickDrive(private val fieldOrientated: Boolean) : CommandBase() {
             y -= rateY * constants.joystickChangeSpeed / rateChange
         }
 
-        var rot = Input.getRot()
+        var rot = Input.getRot() * constants.rotSpeed
 
-        if (abs(rot) <= constants.rotDeadband) {
+        if (abs(rot) <= constants.joystickDeadband) {
             rot = 0.0
         }
 
-        if (x.pow(2) + x.pow(2) <= constants.powerDeadband * constants.powerDeadband && abs(rot) <= constants.rotDeadband) {
+        if (x.pow(2) + y.pow(2) <= constants.powerDeadband * constants.powerDeadband && abs(rot) <= constants.rotDeadband) {
             Drivetrain.stop()
         } else {
             if (fieldOrientated) {
-                Drivetrain.drive(ChassisSpeeds.fromFieldRelativeSpeeds(x * constants.driveSpeed, y * constants.driveSpeed, rot * constants.rotSpeed, Drivetrain.pose.rotation))
+                Drivetrain.drive(ChassisSpeeds.fromFieldRelativeSpeeds(x, y, rot, Drivetrain.pose.rotation))
             } else {
-                Drivetrain.drive(ChassisSpeeds(x * constants.driveSpeed, y * constants.driveSpeed, rot * constants.rotSpeed))
+                Drivetrain.drive(ChassisSpeeds(x, y, rot))
             }
         }
 
-        // Maybe rumble when driving stops
         Input.setRumble(Drivetrain.getAccelSqr() * constants.rumbleFactor)
     }
 

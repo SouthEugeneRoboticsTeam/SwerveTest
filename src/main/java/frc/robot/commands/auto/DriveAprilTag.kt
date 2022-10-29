@@ -5,6 +5,7 @@ import edu.wpi.first.math.controller.PIDController
 import edu.wpi.first.math.controller.ProfiledPIDController
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.trajectory.Trajectory
 import edu.wpi.first.math.trajectory.TrajectoryGenerator
 import edu.wpi.first.math.trajectory.TrapezoidProfile
@@ -17,7 +18,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.atan2
 
-class DriveAprilTag : CommandBase(), Reloadable {
+class DriveAprilTag(private val offset: Translation2d) : CommandBase(), Reloadable {
     private var trajectory: Trajectory? = null
     private var angle: Rotation2d? = null
 
@@ -43,7 +44,7 @@ class DriveAprilTag : CommandBase(), Reloadable {
     }
 
     private fun getVisionEndPose(): Pose2d {
-        return Pose2d(Vision.targetPose!!.translation + constants.visionEndOffset, -Vision.targetPose!!.rotation)
+        return Pose2d(Vision.targetPose!!.translation + offset, -Vision.targetPose!!.rotation)
     }
 
     private fun tryCalculatePath() {
@@ -93,7 +94,6 @@ class DriveAprilTag : CommandBase(), Reloadable {
 
         if (Vision.targetPose != null) {
             val relativeTrans = Vision.targetPose!!.translation - Drivetrain.pose.translation
-            println(relativeTrans)
             angle = Drivetrain.pose.rotation + Rotation2d(atan2(relativeTrans.y, relativeTrans.x))
         }
 

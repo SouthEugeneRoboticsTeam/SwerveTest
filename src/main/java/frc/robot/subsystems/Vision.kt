@@ -5,7 +5,6 @@ import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj2.command.SubsystemBase
-import java.lang.System.currentTimeMillis
 import kotlin.math.atan2
 
 object Vision : SubsystemBase() {
@@ -17,12 +16,9 @@ object Vision : SubsystemBase() {
     var targetPose: Pose2d? = null
         private set
 
-    private fun getMillisSinceUpdate() = if (isTargetEntry.exists()) { currentTimeMillis() - isTargetEntry.lastChange } else { null }
-
     // Runs before command periodic
     override fun periodic() {
-        val lastUpdate = getMillisSinceUpdate()
-        targetPose = if (isTargetEntry.getBoolean(false)) {// && lastUpdate != null && lastUpdate <= constants.visionTimeout) {
+        targetPose = if (isTargetEntry.getBoolean(false)) {
             val rawPos = targetPosEntry.getDoubleArray(DoubleArray(0))
             val rawRot = targetAngleEntry.getDoubleArray(DoubleArray(0))
             // Drivetrain.pose.translation may be from the previous periodic
