@@ -48,6 +48,7 @@ class DriveAprilTag(private val offset: Translation2d) : CommandBase(), Reloadab
     }
 
     private fun tryCalculatePath() {
+        println(Vision.targetPose)
         if (Vision.targetPose != null) {
             // Yes it is swerve so the pose rotation shouldn't matter, but it will generate a nicer trajectory than other angles
             trajectory = TrajectoryGenerator.generateTrajectory(Drivetrain.pose, mutableListOf(), getVisionEndPose(), constants.trajectoryConfig)

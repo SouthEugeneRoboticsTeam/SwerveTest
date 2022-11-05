@@ -23,7 +23,7 @@ object TunableConstants {
     val autoForwardI = TunableNumber("Auto Forward I", 0.0)
     val autoForwardD = TunableNumber("Auto Forward D", 0.0)
 
-    val autoAngleP = TunableNumber("Auto Angle P", 0.0)//1.5)
+    val autoAngleP = TunableNumber("Auto Angle P", 2.5)
     val autoAngleI = TunableNumber("Auto Angle I", 0.0)
     val autoAngleD = TunableNumber("Auto Angle D", 0.0)
 
@@ -85,7 +85,7 @@ class Constants {
     val visionDisRecalc = 0.2
     val visionRotRecalc = 0.3
 
-    val trajectoryConfig = TrajectoryConfig(2.0, 2.0)
+    val trajectoryConfig = TrajectoryConfig(2.0 * 0.1, 2.0)
 
     val tuning = false
 }

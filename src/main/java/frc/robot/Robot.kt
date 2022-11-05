@@ -13,8 +13,9 @@ object Robot : TimedRobot() {
     private val commandScheduler = CommandScheduler.getInstance()
 
     private val joystickDrive = JoystickDrive(true)
-    private val auto = DriveAprilTag(Translation2d(-1.0, 0.0))
-    /*private val auto = DrivePath(TrajectoryGenerator.generateTrajectory(
+    private val auto = DriveAprilTag(Translation2d(0.0, -1.0))
+    /*private val auto = DrivePath(
+        TrajectoryGenerator.generateTrajectory(
         Pose2d(0.0, 0.0, Rotation2d(0.0)),
         listOf(Translation2d(1.0, 1.0),
             Translation2d(0.0, 2.0),

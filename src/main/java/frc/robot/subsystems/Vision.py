@@ -4,7 +4,7 @@ import json
 import time
 import math
 
-from cscore import CameraServer, VideoSource, UsbCamera
+from cscore import CameraServer, VideoSource, UsbCamera, CvSink
 from networktables import NetworkTablesInstance
 from pupil_apriltags import Detector
 import cv2
@@ -12,21 +12,19 @@ import numpy as np
 
 server = CameraServer.getInstance()
 
-with open('/boot/frc.json') as f:
-    config = json.load(f)
-camera = config['cameras'][0]
-
 ntinst = NetworkTablesInstance.getDefault()
 ntinst.startClientTeam(2521)
 ntinst.startDSClient()
 
-width = camera['width']
-height = camera['height']
+width = 640
+height = 480
 
-server.startAutomaticCapture()
+cam = UsbCamera("Main", 0)
+cam.setConnectionStrategy(UsbCamera.ConnectionStrategy.kKeepOpen)
+cam.setResolution(width, height)
 
-input_stream = server.getVideo()
-output_stream = server.putVideo('Processed', width, height)
+input_stream = CvSink("Input")
+input_stream.setSource(cam)
 
 # Table for vision output information
 vision_table = ntinst.getTable('Vision')
@@ -46,12 +44,10 @@ try:
         frame_time, input_img = input_stream.grabFrame(None)
 
         if frame_time == 0:
-            output_stream.notifyError(input_stream.getError())
             continue
 
-        # Figure out tag size
         detections = detector.detect(cv2.cvtColor(input_img, cv2.COLOR_BGR2GRAY), estimate_tag_pose=True,
-                                     camera_params=cam_params, tag_size=0.15 / 4.4)
+                                         camera_params=cam_params, tag_size=0.15)
 
         vision_table.putBoolean('Is Target', len(detections) > 0)
 
@@ -74,13 +70,11 @@ try:
             for detection in detections:
                 dis = math.sqrt(detection.pose_t[0] ** 2 + detection.pose_t[1] ** 2 + detection.pose_t[2] ** 2)
                 cv2.putText(input_img, '{:.1E}'.format(dis), (int(detection.center[0]), int(detection.center[1])),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0))
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 0))
 
         processing_time = time.time() - start_time
         fps = 1 / processing_time
-        cv2.putText(input_img, str(round(fps, 1)), (0, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255))
-
-        output_stream.putFrame(input_img)
+        cv2.putText(input_img, str(round(fps, 1)), (0, 12), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0))
 
 except Exception as e:
     vision_table.putBoolean('Is Target', False)
